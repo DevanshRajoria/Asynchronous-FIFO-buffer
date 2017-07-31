@@ -1,23 +1,5 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    22:46:44 07/08/2017 
-// Design Name: 
-// Module Name:    Asyn_fifo_CQ 
-// Project Name: 	 Asynchronous FIFO buffer using Circular Queue based implementation
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+
 module Asyn_fifo_CQ(data_out,mem_full,mem_empty,data_in,rst,rclk,wclk,r_en,w_en);
 	parameter data_width = 4;
 	parameter mem_width = 3;
@@ -87,27 +69,4 @@ module Asyn_fifo_CQ(data_out,mem_full,mem_empty,data_in,rst,rclk,wclk,r_en,w_en)
 	end
 	end
 	
-endmodule
-
-module GrayCode_Counter(q,rst,clk);
-	parameter n=3;
-	input rst;
-	input clk;
-	output reg [n-1:0]q;
-	reg [n-1:0]temp;
-	initial begin
-	q<=3'b000;
-	temp<=3'b000;
-	end
-	always @(posedge clk)begin
-		if(!rst)begin
-			q[0] <= temp[1]^temp[0];
-			q[1] <= temp[2]^temp[1];
-			q[2] <= temp[2];
-			temp <= temp + 3'b001;
-		end
-		else begin
-			q<=3'b000;
-		end
-	end
 endmodule
