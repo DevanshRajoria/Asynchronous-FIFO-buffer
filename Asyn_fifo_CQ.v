@@ -1,72 +1,74 @@
-`timescale 1ns / 1ps
+`timescale 1ns/1ps
 
-module Asyn_fifo_CQ(data_out,mem_full,mem_empty,data_in,rst,rclk,wclk,r_en,w_en);
-	parameter data_width = 4;
-	parameter mem_width = 3;
-	parameter ptr_count = 2;
-	
-	input rclk;
-	input wclk;
-	input r_en;
-	input w_en;
-	input rst;
-	input [data_width-1:0] data_in;
-	
-	output reg [data_width-1:0] data_out;
-	output reg mem_full;
-	output reg mem_empty;
-	
-	reg [data_width-1:0]mem[0:mem_width-1];
-	reg [ptr_count-1:0] front;
-	reg [ptr_count-1:0] rear;
-	
-	initial begin
-	front <= 0;
-	rear <= 0;
+module fifo(
+		fifo_out,
+		overflow,
+		underflow,
+		fifo_in,
+		re,
+		we,
+		clk,
+		rst,
+);
+
+parameter data_width = 4;
+parameter addr_width = 4;
+
+input [data_width - 1:0] fifo_in;
+input re;
+input we;
+input clk;
+input rst;
+
+output reg [data_width - 1:0] fifo_out;
+output reg overflow;
+output reg underflow;
+
+reg [data_width - 1:0] fifo_memory [0:addr_width - 1];
+
+integer inPtr; 
+integer outPtr;
+
+always @(posedge clk) begin
+	if(rst) begin
+		overflow <= 0;
+		underflow <= 0;
+		inPtr <= 0;
+		outPtr <= 0;
 	end
-	
-	always @(posedge wclk)begin
-	if(rst)begin
-		mem_full<=1'b0;
-		rear<=0;
-	end
-	else if(w_en)begin
-		if((rear == mem_width-1)&&(front == 0) || (rear == front-1))begin
-			mem_full <= 1'b1;
+end
+
+always @(posedge clk) begin
+	if(re) begin
+		if(outPtr == ((inPtr + 1) % addr_width)) begin
+			$display("FIFO is full");
+			overflow <= 1'b1;
 		end
 		else begin
-			mem[rear] <= data_in;
-			if(rear == mem_width-1)begin
-				rear <= 0;
-			end
-			else begin
-				rear <= (rear + 2'b1);
-			end
-			mem_full <= 1'b0;
-		end	
+			fifo_memory[inPtr] <= fifo_in;
+			inPtr <= (inPtr + 1)%(addr_width);
+			overflow <= 1'b0;
+			$display("Inserted at : %d",inPtr);
+			underflow <= 1'b0;			
+		end
+		$display("\n");	
 	end
-	end
-	
-	always @(posedge rclk)begin
-	if(rst)begin
-		mem_empty<=1'b0;
-		front<=0;
-	end
-	else if(r_en)begin
-		if(front==0 && rear==0)begin
-			mem_empty <= 1'b1;
+end
+
+always @(posedge clk) begin
+	if(we) begin
+		if ((inPtr == outPtr)) begin
+			$display("FIFO is Empty");
+			underflow <= 1'b1;
 		end
 		else begin
-			data_out <= mem[front];
-			if(front == mem_width-1)begin
-				front <= 0;
-			end
-			else begin 
-				front <= (front+2'b1);
-			end
-			mem_empty <= 1'b0;
+			fifo_out <= fifo_memory[outPtr];
+			outPtr <= (outPtr + 1)%(addr_width);
+			$display("Element is : %d",fifo_out);
+			overflow <= 1'b0; 
 		end
+		$display("\n");	
 	end
-	end
-	
+end
+
 endmodule
