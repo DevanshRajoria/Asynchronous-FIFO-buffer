@@ -1,82 +1,62 @@
 `timescale 1ns / 1ps
+`include "fifo.v"
 
-////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer:
-//
-// Create Date:   23:42:51 07/08/2017
-// Design Name:   Asyn_fifo_CQ
-// Module Name:   E:/VLSI_Programs/Mem_Proj31/test_asyn_fifo.v
-// Project Name:  Mem_Proj31
-// Target Device:  
-// Tool versions:  
-// Description: 
-//
-// Verilog Test Fixture created by ISE for module: Asyn_fifo_CQ
-//
-// Dependencies:
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-////////////////////////////////////////////////////////////////////////////////
+module fifo_tb;
 
-module test_asyn_fifo;
+parameter data_width = 4;
+parameter addr_width = 4;
 
-	// Inputs
-	reg [3:0] data_in;
-	reg rclk;
-	reg wclk;
-	reg r_en;
-	reg w_en;
+reg [data_width - 1:0] fifo_in;
+reg re;
+reg we;
+reg clk;
+reg rst;
 
-	// Outputs
-	wire [3:0] data_out;
-	wire mem_full;
-	wire mem_empty;
+wire [data_width - 1:0] fifo_out;
+wire overflow;
+wire underflow;
 
-	// Instantiate the Unit Under Test (UUT)
-	Asyn_fifo_CQ uut (
-		.data_out(data_out), 
-		.mem_full(mem_full), 
-		.mem_empty(mem_empty), 
-		.data_in(data_in), 
-		.rclk(rclk), 
-		.wclk(wclk), 
-		.r_en(r_en), 
-		.w_en(w_en)
+fifo uut(
+		.fifo_out(fifo_out),
+		.overflow(overflow),
+		.underflow(underflow),
+		.fifo_in(fifo_in),
+		.re(re),
+		.we(we),
+		.clk(clk),
+		.rst(rst)
 	);
 
-	initial begin
-	
-	#10; w_en=1; wclk=1; data_in=4'b0011;
-	#10; wclk=0;
-	#10; w_en=1; r_en=1; wclk=1; rclk=1; data_in=4'b1001;
-	#10; w_en=0; r_en=0;
-	#10; w_en=1; wclk=1; data_in=4'b0111;
-	#10; wclk=0;
-	#10; w_en=1; wclk=1; data_in=4'b1111;
-	#10; wclk=0;
-	#10; r_en=1; rclk=1; 
-	#10; r_en=0; rclk=0;
-	#10; w_en=1; wclk=1; data_in=4'b0000;
-	#10; wclk=0;
-	w_en=0;
-	
-	
-	#10; r_en=1; rclk=1; 
-	#10; r_en=0; rclk=0;
-	#10; r_en=1; rclk=1; 
-	#10; r_en=0; rclk=0;
-	#10; r_en=1; rclk=1; 
-	#10; r_en=0; rclk=0;
-	#10; r_en=1; rclk=1; 
-	r_en=0;
-	
-	end
-   
-	initial 
-	$monitor("time=%d,r_en=%b,w_en=%b,data_in=%b: data_out=%b,mem_full=%b,mem_empty=%b",$time,r_en,w_en,data_in,data_out,mem_full,mem_empty);
-endmodule
+initial begin
+	forever #5 clk = ~clk;
+end
 
+initial begin
+	clk = 0;
+ 	
+	#5 rst = 1;
+	#2 rst = 0;
+end
+
+initial begin
+	#15 re = 1; fifo_in = 4'h1;
+	#10 fifo_in = 4'h4;
+	#10 fifo_in = 4'ha;
+	#10 fifo_in = 4'h8;
+	#10 fifo_in = 4'hc;
+
+	#10 re = 0; we = 1; 
+	#50 we = 0; 
+	#20 $finish;
+
+end
+
+initial begin
+	$monitor("time = %t,fifo_in = %d,re = %b,we = %b,*********\n fifo_out = %d,overflow = %b,underflow = %b \n\n",
+		$time,fifo_in,re, we, fifo_out, overflow, underflow);
+
+	$dumpfile("fifo.vcd");
+	$dumpvars(0,fifo_tb);
+end
+
+endmodule 
